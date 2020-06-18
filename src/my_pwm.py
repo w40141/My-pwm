@@ -2,12 +2,13 @@ import hashlib
 import hmac
 import os
 import pickle
+import pprint
 import random
 import string
-import pprint
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 import fire
+import pyperclip
 
 ROOT_PATH = os.environ["HOME"] + "/password"
 CONFIG_FILE = ROOT_PATH + "/password_config.pickle"
@@ -20,36 +21,33 @@ class MyPwm:
 
         config = self._make_password_path()
         self.password_path = config["path"]
-        self.number = config["number"]
+        self.seed = config["seed"]
         self.password_file = self.password_path + "/password.pickle"
         self.password_dict = self._load_password()
 
-    def _make_password_path(self) -> Tuple[str, int]:
+    def _make_password_path(self) -> Dict[str, str]:
         if os.path.isfile(CONFIG_FILE):
             return self._load_config()
         else:
             return self._register()
 
-    def _load_config(self) -> Tuple[str, int]:
+    def _load_config(self) -> Dict[str, str]:
         with open(CONFIG_FILE, "rb") as f:
             return pickle.load(f)
 
-    def _register(self):
+    def _register(self) -> Dict[str, str]:
         path = input("Input Password file's path. Default[" + ROOT_PATH + "] ")
         if not os.path.isdir(path):
             path = ROOT_PATH
 
-        try:
-            num = int(input("Input number. Default 0. "))
-        except ValueError:
-            num = 0
+        seed = input("Input seed.")
 
-        config = {"path": path, "number": num}
+        config = {"path": path, "seed": seed}
         with open(CONFIG_FILE, "wb") as f:
             pickle.dump(config, f)
         return config
 
-    def _load_password(self) -> Dict[str, Dict[str, Any]]:
+    def _load_password(self) -> Dict[str, Any]:
         if os.path.isfile(self.password_file):
             with open(self.password_file, "rb") as f:
                 return pickle.load(f)
@@ -70,7 +68,7 @@ class MyPwm:
             print("symbol_flag: " + str(symbol_flag))
             flag = input("Generate (y or n): ")
         signature = hmac.new(domain.encode(), user_id.encode(), hashlib.sha256).hexdigest()
-        random.seed(signature)
+        random.seed(signature + self.seed)
         if symbol_flag:
             chars = "".join([chr(i) for i in range(33, 127)])
         else:
@@ -87,15 +85,15 @@ class MyPwm:
 
     def _generate(self, domain: str) -> str:
         if domain in self.password_dict:
-            return self._search(domain)
+            return self._search(domain)["password"]
         else:
             return self._gen(domain)
 
     def register(self) -> None:
-        print("Now: Path is %s and Number is %d." % (self.password_path, self.number))
+        print("Now: Path is %s and seed is %d." % (self.password_path, self.seed))
         self._register()
 
-    def _input_domain(self):
+    def _input_domain(self) -> str:
         flag = "n"
         while flag != "y":
             domain = input("Input domain: ")
@@ -104,14 +102,16 @@ class MyPwm:
 
     def generate(self) -> None:
         domain = self._input_domain()
-        print(self._generate(domain))
+        password = self._generate(domain)
+        print(password)
+        pyperclip.copy(password)
 
-    def _search(self, domain: str) -> str:
+    def _search(self, domain: str) -> Dict[str, Any]:
         return self.password_dict[domain]
 
     def show(self) -> None:
         domain = self._input_domain()
-        print(self._search(domain))
+        pprint.pprint(self._search(domain))
 
     def show_all(self) -> None:
         pprint.pprint(self.password_dict)
