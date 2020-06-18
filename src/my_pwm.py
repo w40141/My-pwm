@@ -2,7 +2,6 @@ import hashlib
 import hmac
 import os
 import pickle
-import pprint
 import random
 import string
 from typing import Any, Dict
@@ -27,13 +26,10 @@ class MyPwm:
 
     def _make_password_path(self) -> Dict[str, str]:
         if os.path.isfile(CONFIG_FILE):
-            return self._load_config()
+            with open(CONFIG_FILE, "rb") as f:
+                return pickle.load(f)
         else:
             return self._register()
-
-    def _load_config(self) -> Dict[str, str]:
-        with open(CONFIG_FILE, "rb") as f:
-            return pickle.load(f)
 
     def _register(self) -> Dict[str, str]:
         path = input("Input Password file's path. Default[" + ROOT_PATH + "] ")
@@ -85,7 +81,7 @@ class MyPwm:
 
     def _generate(self, domain: str) -> str:
         if domain in self.password_dict:
-            return self._search(domain)["password"]
+            return self._search_password(domain)
         else:
             return self._gen(domain)
 
@@ -103,18 +99,25 @@ class MyPwm:
     def generate(self) -> None:
         domain = self._input_domain()
         password = self._generate(domain)
+        self._print(password)
+
+    def _search_password(self, domain: str) -> str:
+        return self.password_dict[domain]["password"]
+
+    def _print(self, password):
         print(password)
         pyperclip.copy(password)
 
-    def _search(self, domain: str) -> Dict[str, Any]:
-        return self.password_dict[domain]
-
     def show(self) -> None:
         domain = self._input_domain()
-        pprint.pprint(self._search(domain))
+        password = self._search_password(domain)
+        self._print(password)
 
     def show_all(self) -> None:
-        pprint.pprint(self.password_dict)
+        for key, value in self.password_dict.items():
+            print(key + ": ")
+            for k, v in value.items():
+                print("\t" + k + ": " + str(v))
 
     def _delete(self, domain: str) -> None:
         del self.password_dict[domain]
@@ -126,7 +129,8 @@ class MyPwm:
     def change(self) -> None:
         domain = self._input_domain()
         self._delete(domain)
-        print(self._generate(domain))
+        password = self._generate(domain)
+        self._print(password)
 
     def _save(self) -> None:
         with open(self.password_file, "wb") as f:
