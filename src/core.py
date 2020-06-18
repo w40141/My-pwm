@@ -4,6 +4,7 @@ import os
 import pickle
 import random
 import string
+import pprint
 from typing import Any, Dict, Tuple
 
 import fire
@@ -12,25 +13,26 @@ ROOT_PATH = os.environ["HOME"] + "/password"
 CONFIG_FILE = ROOT_PATH + "/password_config.pickle"
 
 
-class PwManager:
+class MyPwm:
     def __init__(self,):
         if not os.path.exists(ROOT_PATH):
             os.makedirs(ROOT_PATH)
-        self.password_path, self.start = self._make_password_path()
+
+        config = self._make_password_path()
+        self.password_path = config["path"]
+        self.number = config["number"]
         self.password_file = self.password_path + "/password.pickle"
         self.password_dict = self._load_password()
 
     def _make_password_path(self) -> Tuple[str, int]:
         if os.path.isfile(CONFIG_FILE):
-            password_path, num = self._load_config()
+            return self._load_config()
         else:
-            password_path, num = self._register()
-        return password_path, num
+            return self._register()
 
     def _load_config(self) -> Tuple[str, int]:
         with open(CONFIG_FILE, "rb") as f:
-            config = pickle.load(f)
-        return config["path"], config["number"]
+            return pickle.load(f)
 
     def _register(self):
         path = input("Input Password file's path. Default[" + ROOT_PATH + "] ")
@@ -45,13 +47,12 @@ class PwManager:
         config = {"path": path, "number": num}
         with open(CONFIG_FILE, "wb") as f:
             pickle.dump(config, f)
-        return path, num
+        return config
 
     def _load_password(self) -> Dict[str, Dict[str, Any]]:
         if os.path.isfile(self.password_file):
             with open(self.password_file, "rb") as f:
-                password_dict = pickle.load(f)
-            return password_dict
+                return pickle.load(f)
         else:
             return {}
 
@@ -81,7 +82,7 @@ class PwManager:
             "symbol_flag": symbol_flag,
             "password": password,
         }
-        self.save()
+        self._save()
         return password
 
     def _generate(self, domain: str) -> str:
@@ -91,6 +92,7 @@ class PwManager:
             return self._gen(domain)
 
     def register(self) -> None:
+        print("Now: Path is %s and Number is %d." % (self.password_path, self.number))
         self._register()
 
     def _input_domain(self):
@@ -112,8 +114,7 @@ class PwManager:
         print(self._search(domain))
 
     def show_all(self) -> None:
-        for k, v in self.password_dict.items():
-            print(k, v)
+        pprint.pprint(self.password_dict)
 
     def _delete(self, domain: str) -> None:
         del self.password_dict[domain]
@@ -127,10 +128,10 @@ class PwManager:
         self._delete(domain)
         print(self._generate(domain))
 
-    def save(self) -> None:
+    def _save(self) -> None:
         with open(self.password_file, "wb") as f:
             pickle.dump(self.password_dict, f)
 
 
 def main() -> None:
-    fire.Fire(PwManager)
+    fire.Fire(MyPwm)

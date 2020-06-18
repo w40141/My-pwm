@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "pwmanager"
+name = "my-pwm"
 version = "0.0.1"
 description = "Passward maneger"
 readme = "README.rst"
@@ -15,16 +15,16 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.8"
 fire = "^0.3.1"
-
-[tool.poetry.dev-dependencies]
 black = "^19.10b0"
 mypy = "^0.780"
-isort = "^4.3.21"
 flake8 = "^3.8.3"
+isort = "^4.3.21"
 pytest = "^5.4.3"
 
+[tool.poetry.dev-dependencies]
+
 [tool.poetry.scripts]
-pw = 'pwmanager:main'
+pw = 'my_pwm:main'
 
 [tool.black]
 line-length = 99
@@ -53,7 +53,7 @@ multi_line_output = 3
 
 [tool.mypy]
 ignore_missing_imports = 1
+
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
-
