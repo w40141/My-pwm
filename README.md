@@ -13,6 +13,10 @@ fish completion
 
 ## How to Use
 
+Register config
+
+    pw register
+
 Generate password
 
     pw generate

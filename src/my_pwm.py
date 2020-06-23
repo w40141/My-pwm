@@ -86,7 +86,7 @@ class MyPwm:
             return self._gen(domain)
 
     def register(self) -> None:
-        print("Now: Path is %s and seed is %d." % (self.password_path, self.seed))
+        print("Now: Path is %s and seed is %s." % (self.password_path, self.seed))
         self._register()
 
     def _input_domain(self) -> str:
