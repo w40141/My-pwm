@@ -125,6 +125,14 @@ class MyPwm:
     def delete(self) -> None:
         domain = self._input_domain()
         self._delete(domain)
+        self._save()
+
+    def delete_all(self):
+        flag = "n"
+        while flag != "y":
+            flag = input("Do you want to delete all domain?: y or n: ")
+        self.password_dict = {}
+        self._save()
 
     def change(self) -> None:
         domain = self._input_domain()
