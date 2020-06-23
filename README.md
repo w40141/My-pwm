@@ -1,5 +1,15 @@
-# mypwgen
+# my-pwm
 Passward generator
+
+## How to Install
+
+pip install
+
+    pip install my-pwm
+
+fish completion
+
+    fisher add w40141/fish-my-pwm
 
 ## How to Use
 
