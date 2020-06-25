@@ -164,7 +164,7 @@ class MyPwm:
 
     def _save(self) -> None:
         with open(self.params_file, "w") as f:
-            json.dump(self.seed_params_dict, f)
+            json.dump(self.seed_params_dict, f, indent=4)
 
 
 def main() -> None:
