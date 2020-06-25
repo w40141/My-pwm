@@ -8,6 +8,7 @@ from typing import Any, Dict
 
 import fire
 import pyperclip
+import qrcode
 
 ROOT_PATH = os.environ["HOME"] + "/password"
 CONFIG_FILE = ROOT_PATH + "/password_config.pickle"
@@ -36,12 +37,16 @@ class MyPwm:
         if not os.path.isdir(path):
             path = ROOT_PATH
 
-        seed = input("Input seed.")
+        seed = input("Input seed: ")
 
         config = {"path": path, "seed": seed}
         with open(CONFIG_FILE, "wb") as f:
             pickle.dump(config, f)
         return config
+
+    def register(self) -> None:
+        print("Now: Path is %s and seed is %s." % (self.password_path, self.seed))
+        self._register()
 
     def _load_password(self) -> Dict[str, Any]:
         if os.path.isfile(self.password_file):
@@ -76,7 +81,7 @@ class MyPwm:
             "symbol_flag": symbol_flag,
             "password": password,
         }
-        self._save()
+        # self._save()
         return password
 
     def _generate(self, domain: str) -> str:
@@ -85,10 +90,6 @@ class MyPwm:
         else:
             return self._gen(domain)
 
-    def register(self) -> None:
-        print("Now: Path is %s and seed is %s." % (self.password_path, self.seed))
-        self._register()
-
     def _input_domain(self) -> str:
         flag = "n"
         while flag != "y":
@@ -96,22 +97,34 @@ class MyPwm:
             flag = input("domain: " + domain + "? y or n: ")
         return domain
 
-    def generate(self) -> None:
+    def generate(self, mode='normal') -> None:
         domain = self._input_domain()
         password = self._generate(domain)
-        self._print(password)
+        self._print(password, mode)
 
     def _search_password(self, domain: str) -> str:
         return self.password_dict[domain]["password"]
 
-    def _print(self, password):
+    def _print(self, password, mode):
+        mode_dict = {
+            'normal': self._print_normal,
+            'qr': self._print_qr,
+        }
         print(password)
+        mode_dict[mode](password)
+
+    def _print_normal(self, password: str) -> None:
         pyperclip.copy(password)
 
-    def show(self) -> None:
+    def _print_qr(self, password: str) -> None:
+        qr = qrcode.QRCode()
+        qr.add_data(password)
+        qr.print_ascii()
+
+    def show(self, mode='normal') -> None:
         domain = self._input_domain()
         password = self._search_password(domain)
-        self._print(password)
+        self._print(password, mode)
 
     def show_all(self) -> None:
         for key, value in self.password_dict.items():
@@ -125,20 +138,20 @@ class MyPwm:
     def delete(self) -> None:
         domain = self._input_domain()
         self._delete(domain)
-        self._save()
+        # self._save()
 
     def delete_all(self):
         flag = "n"
         while flag != "y":
             flag = input("Do you want to delete all domain?: y or n: ")
         self.password_dict = {}
-        self._save()
+        # self._save()
 
-    def change(self) -> None:
+    def change(self, mode='normal') -> None:
         domain = self._input_domain()
         self._delete(domain)
         password = self._generate(domain)
-        self._print(password)
+        self._print(password, mode)
 
     def _save(self) -> None:
         with open(self.password_file, "wb") as f:
@@ -146,4 +159,6 @@ class MyPwm:
 
 
 def main() -> None:
-    fire.Fire(MyPwm)
+    mypwm = MyPwm()
+    fire.Fire(mypwm)
+    mypwm._save()
