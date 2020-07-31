@@ -1,15 +1,15 @@
-import datetime
-import hashlib
+import os
 import hmac
 import json
-import os
 import random
 import string
+import hashlib
+import datetime
 from typing import Any, Dict
 
 import fire
-import pyperclip
 import qrcode
+import pyperclip
 
 ROOT_PATH = os.environ["HOME"] + "/password"
 CONFIG_FILE = ROOT_PATH + "/password_config.json"
@@ -24,10 +24,11 @@ class MyPwm:
         self.password_path = config["path"]
         self.seed = config["seed"]
         self.params_file = config["params_file"]
+        self.algorithm = config["algorithm"]
         self.seed_params_dict = self._load_params()
         self.params_dict = self.seed_params_dict[self.seed]
 
-    def _make_password_path(self) -> Dict[str, str]:
+    def _make_password_path(self) -> Any:
         if os.path.isfile(CONFIG_FILE):
             with open(CONFIG_FILE, "r") as f:
                 return json.load(f)
@@ -35,33 +36,55 @@ class MyPwm:
             return self._register()
 
     def _register(self) -> Dict[str, str]:
-        path = input("Input Password file's path. Default[" + ROOT_PATH + "] ")
-        if not os.path.isdir(path):
-            path = ROOT_PATH
-
-        seed = input("Input seed: ")
-
+        path = self._register_path()
+        seed = self._register_seed()
+        algorithm = self._register_algorithm()
         today = datetime.datetime.today()
         params_file = ROOT_PATH + "/%s.json" % today.strftime("%Y_%m_%d_%H_%M")
-
-        config = {"path": path, "seed": seed, "params_file": params_file}
+        config = {"path": path, "seed": seed, "params_file": params_file, "algorithm": algorithm}
         with open(CONFIG_FILE, "w") as f:
             json.dump(config, f)
         return config
 
+    def _register_path(self):
+        path = input("Input Password file's path. Default[" + ROOT_PATH + "] ")
+        if not os.path.isdir(path):
+            path = ROOT_PATH
+        return path
+
+    def _register_seed(self):
+        seed = input("Input seed: ")
+        return seed
+
+    def _register_algorithm(self):
+        print("Input algorithm number.")
+        number_algorithm = {}
+        for i, name in enumerate(hashlib.algorithms_guaranteed):
+            str_num = str(i)
+            number_algorithm[str_num] = name
+            print(str_num + ": " + name)
+        input_num = input("default is sha256 (1): ")
+        if input_num in number_algorithm:
+            algorithm = number_algorithm[input_num]
+        else:
+            algorithm = "sha256"
+        return algorithm
+
     def register(self) -> None:
-        print("Now: Path is %s and seed is %s." % (self.password_path, self.seed))
+        print(
+            "Now: Path is %s, and seed is %s, and algorithm is %s."
+            % (self.password_path, self.seed, self.algorithm)
+        )
         self._register()
 
-    def _load_params(self) -> Dict[str, Any]:
+    def _load_params(self) -> Any:
         if os.path.isfile(self.params_file):
             with open(self.params_file, "r") as f:
                 return json.load(f)
         else:
             return {self.seed: {}}
 
-    # def _gen(self, domain: str) -> str:
-    def _generate(self, domain: str) -> str:
+    def _generate(self, domain: str) -> Any:
         flag = "n"
         while flag != "y":
             user_id = input("Input user ID: ")
@@ -85,7 +108,7 @@ class MyPwm:
         user_id = self.params_dict[domain]["user_id"]
         size = self.params_dict[domain]["size"]
         symbol_flag = self.params_dict[domain]["symbol_flag"]
-        signature = hmac.new(domain.encode(), user_id.encode(), hashlib.sha256).hexdigest()
+        signature = hmac.new(domain.encode(), user_id.encode(), self.algorithm).hexdigest()
         random.seed(signature + self.seed)
         if symbol_flag:
             chars = "".join([chr(i) for i in range(33, 127)])
