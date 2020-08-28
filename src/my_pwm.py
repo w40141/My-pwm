@@ -92,14 +92,17 @@ class MyPwm:
                 size = int(input("Input the length of a password. Default is 16: "))
             except ValueError:
                 size = 16
+            passphrase = input("Input passphrase. Default is "": ")
             symbol_flag = True if input("Is symbols valid? (Default is false.): ") else False
             print("user id: " + user_id)
             print("size: " + str(size))
+            print("passphrase: " + passphrase)
             print("symbol_flag: " + str(symbol_flag))
             flag = input("Generate (y or n): ")
         self.params_dict[domain] = {
             "user_id": user_id,
             "size": size,
+            "passphrase": passphrase,
             "symbol_flag": symbol_flag,
         }
         return self._gen_password(domain)
@@ -107,9 +110,13 @@ class MyPwm:
     def _gen_password(self, domain: str):
         user_id = self.params_dict[domain]["user_id"]
         size = self.params_dict[domain]["size"]
+        if "passphrase" in self.params_dict[domain]:
+            passphrase = self.params_dict[domain]["passphrase"]
+        else:
+            passphrase = ""
         symbol_flag = self.params_dict[domain]["symbol_flag"]
-        signature = hmac.new(domain.encode(), user_id.encode(), self.algorithm).hexdigest()
-        random.seed(signature + self.seed)
+        signature = hmac.new(domain.encode(), user_id.encode(), hashlib.sha256).hexdigest()
+        random.seed(signature + self.seed + passphrase)
         if symbol_flag:
             chars = "".join([chr(i) for i in range(33, 127)])
         else:
