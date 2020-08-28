@@ -16,7 +16,9 @@ CONFIG_FILE = ROOT_PATH + "/password_config.json"
 
 
 class MyPwm:
-    def __init__(self,):
+    def __init__(
+        self,
+    ):
         if not os.path.exists(ROOT_PATH):
             os.makedirs(ROOT_PATH)
 
@@ -92,7 +94,7 @@ class MyPwm:
                 size = int(input("Input the length of a password. Default is 16: "))
             except ValueError:
                 size = 16
-            passphrase = input("Input passphrase. Default is "": ")
+            passphrase = input("Input passphrase: ")
             symbol_flag = True if input("Is symbols valid? (Default is false.): ") else False
             print("user id: " + user_id)
             print("size: " + str(size))
@@ -114,6 +116,7 @@ class MyPwm:
             passphrase = self.params_dict[domain]["passphrase"]
         else:
             passphrase = ""
+            self.params_dict[domain]["passphrase"] = passphrase
         symbol_flag = self.params_dict[domain]["symbol_flag"]
         signature = hmac.new(domain.encode(), user_id.encode(), hashlib.sha256).hexdigest()
         random.seed(signature + self.seed + passphrase)
